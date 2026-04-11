@@ -1,0 +1,17 @@
+[project]
+name = "r3name"
+version = "0.1.0"
+description = "Rename files on the command line"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.15.10",
+]
+
+[tool.pytest.ini_options]
+addopts = "-n auto"
