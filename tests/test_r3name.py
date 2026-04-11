@@ -26,6 +26,13 @@ class TestSub:
         assert "Dry run" in result.stdout
         assert lsnames(tmp_path) == {"old_file.txt"}
 
+    def test_dry_run_does_not_emit_literal_rich_markup(self, mkfiles, cli):
+        mkfiles("old_file.txt")
+        result = cli("--sub", "old", "new", "-n")
+        assert result.returncode == 0
+        assert "[cyan]" not in result.stdout
+        assert "[/]" not in result.stdout
+
 
 # ---------------------------------------------------------------------------
 # --regex  (Python re.sub)

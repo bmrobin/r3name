@@ -12,9 +12,10 @@ import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .output import bold, cyan, dim, green, yellow
+from .output import bold, console, cyan, dim, green, yellow
 
 UNDO_FILENAME = ".r3name-undo.json"
+print = console.print
 
 
 # ─── Transforms ───────────────────────────────────────────────────────────────
@@ -171,7 +172,7 @@ def run_undo(root: Path, args: argparse.Namespace) -> None:
     to_apply = len(records) - missing_sources - conflicts
 
     if args.dry_run:
-        print(f"\n{bold(yellow('Dry run'))} — no changes made.")
+        print("\n[bold yellow]Dry run[/] — no changes made.")
         return
 
     if to_apply == 0:
@@ -461,7 +462,7 @@ def main() -> None:
     to_apply = len(plan) - n_conflicts
 
     if args.dry_run:
-        print(f"\n{bold(yellow('Dry run'))} — no changes made.")
+        print("\n[bold yellow]Dry run[/] — no changes made.")
         return
 
     if to_apply == 0:
