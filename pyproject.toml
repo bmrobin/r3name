@@ -20,6 +20,7 @@ dev = [
     "pytest>=9.0.3",
     "pytest-xdist>=3.8.0",
     "ruff>=0.15.10",
+    "ty>=0.0.29",
 ]
 
 [tool.pytest.ini_options]

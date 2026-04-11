@@ -12,10 +12,9 @@ import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .output import bold, console, cyan, dim, green, yellow
+from .output import Colors, Styles, log, style
 
 UNDO_FILENAME = ".r3name-undo.json"
-print = console.print
 
 
 # ─── Transforms ───────────────────────────────────────────────────────────────
@@ -119,33 +118,35 @@ def run_undo(root: Path, args: argparse.Namespace) -> None:
     """
     mpath = get_undo_manifest_path(root)
     if not mpath.exists():
-        print(f"No undo manifest found at {mpath}.")
+        log(f"No undo manifest found at {mpath}.")
         return
 
     manifest = load_undo_manifest(root)
     raw_records = manifest.get("renames", [])
     if not raw_records:
-        print("Undo manifest is empty — nothing to undo.")
+        log("Undo manifest is empty — nothing to undo.")
         return
 
     # Reverse order to safely undo nested directory renames.
     records: list[tuple[Path, Path]] = []
     for rec in reversed(raw_records):
         if not isinstance(rec, dict) or "old" not in rec or "new" not in rec:
-            print(yellow("Skipping malformed undo record."))
+            log(style("Skipping malformed undo record.", Colors.YELLOW))
             continue
         src = Path(str(rec["new"]))
         dst = Path(str(rec["old"]))
         records.append((src, dst))
 
     if not records:
-        print("Undo manifest has no valid records — nothing to undo.")
+        log("Undo manifest has no valid records — nothing to undo.")
         return
 
     col = min(max(len(display_name(src, root)) for src, _ in records), 60)
-    print(f"\n{bold(f'{len(records)} undo rename(s) planned')}\n")
-    print(f"  {bold('Current'):<{col}}    {bold('Restore To')}")
-    print(
+    log(f"\n{style(f'{len(records)} undo rename(s) planned', Styles.BOLD)}\n")
+    log(
+        f"  {style('Current', Styles.BOLD):<{col}}    {style('Restore To', Styles.BOLD)}"
+    )
+    log(
         "  "
         + "─"
         * (col + 4 + min(max(len(display_name(dst, root)) for _, dst in records), 80))
@@ -157,36 +158,40 @@ def run_undo(root: Path, args: argparse.Namespace) -> None:
         s_name = display_name(src, root)[:col].ljust(col)
         d_name = display_name(dst, root)[:80]
         if not src.exists():
-            suffix = dim("  ← source missing, will skip")
-            print(f"  {cyan(s_name)}  →  {yellow(d_name)}{suffix}")
+            suffix = style("  ← source missing, will skip", Styles.DIM)
+            log(
+                f"  {style(s_name, Colors.CYAN)}  →  {style(d_name, Colors.YELLOW)}{suffix}"
+            )
             missing_sources += 1
             continue
         conflict = dst.exists() and not os.path.samefile(dst, src)
         if conflict:
-            suffix = dim("  ← target exists, will skip")
-            print(f"  {cyan(s_name)}  →  {yellow(d_name)}{suffix}")
+            suffix = style("  ← target exists, will skip", Styles.DIM)
+            log(
+                f"  {style(s_name, Colors.CYAN)}  →  {style(d_name, Colors.YELLOW)}{suffix}"
+            )
             conflicts += 1
             continue
-        print(f"  {cyan(s_name)}  →  {green(d_name)}")
+        log(f"  {style(s_name, Colors.CYAN)}  →  {style(d_name, Colors.GREEN)}")
 
     to_apply = len(records) - missing_sources - conflicts
 
     if args.dry_run:
-        print("\n[bold yellow]Dry run[/] — no changes made.")
+        log(style("\nDry run — no changes made.", Colors.YELLOW, Styles.BOLD))
         return
 
     if to_apply == 0:
-        print("\nNo undo operations can be applied safely.")
+        log("\nNo undo operations can be applied safely.")
         return
 
     if not args.yes:
         try:
             ans = input(f"\nApply {to_apply} undo rename(s)? [y/N] ").strip().lower()
         except KeyboardInterrupt, EOFError:
-            print("\nAborted.")
+            log("\nAborted.")
             return
         if ans != "y":
-            print("Aborted.")
+            log("Aborted.")
             return
 
     # Keep only records that were not successfully undone so another --undo can retry.
@@ -201,25 +206,34 @@ def run_undo(root: Path, args: argparse.Namespace) -> None:
         dst = Path(str(rec["old"]))
 
         if not src.exists():
-            print(yellow(f"  SKIP  {display_name(src, root)!r}  (source missing)"))
+            log(
+                style(
+                    f"  SKIP  {display_name(src, root)!r}  (source missing)",
+                    Colors.YELLOW,
+                )
+            )
             remaining_raw.append({"old": str(dst), "new": str(src)})
             continue
         if dst.exists() and not os.path.samefile(dst, src):
-            print(
-                yellow(f"  SKIP  {display_name(src, root)!r}  (target already exists)")
+            log(
+                style(
+                    f"  SKIP  {display_name(src, root)!r}  (target already exists)",
+                    Colors.YELLOW,
+                )
             )
             remaining_raw.append({"old": str(dst), "new": str(src)})
             continue
         try:
             src.rename(dst)
-            print(
-                green(
-                    f"  OK    {display_name(src, root)!r}  →  {display_name(dst, root)!r}"
+            log(
+                style(
+                    f"  OK    {display_name(src, root)!r}  →  {display_name(dst, root)!r}",
+                    Colors.GREEN,
                 )
             )
             applied += 1
         except OSError as e:
-            print(f"  ERR   {display_name(src, root)!r}: {e}")
+            log(f"  ERR   {display_name(src, root)!r}: {e}")
             errors += 1
             remaining_raw.append({"old": str(dst), "new": str(src)})
 
@@ -235,7 +249,7 @@ def run_undo(root: Path, args: argparse.Namespace) -> None:
         parts.append(f"{errors} error(s)")
     if remaining_raw:
         parts.append(f"{len(remaining_raw)} remaining in undo manifest")
-    print("\n" + ", ".join(parts) + ".")
+    log("\n" + ", ".join(parts) + ".")
 
 
 # ─── Target collection ────────────────────────────────────────────────────────
@@ -423,7 +437,7 @@ def main() -> None:
     # Collect entries
     targets = collect_targets(path, args)
     if not targets:
-        print("No matching entries found.")
+        log("No matching entries found.")
         return
 
     # Apply transforms
@@ -437,7 +451,7 @@ def main() -> None:
     plan = [(t, t.parent / nn) for t, nn in zip(targets, new_names) if nn != t.name]
 
     if not plan:
-        print("No changes — all names already match the desired form.")
+        log("No changes — all names already match the desired form.")
         return
 
     # ── Preview table
@@ -445,30 +459,32 @@ def main() -> None:
 
     header_before = "Before"
     header_after = "After"
-    print(f"\n{bold(f'{len(plan)} rename(s) planned')}\n")
-    print(f"  {bold(header_before):<{col}}    {bold(header_after)}")
-    print("  " + "─" * (col + 4 + min(max(len(n.name) for _, n in plan), 80)))
+    log(f"\n{style(f'{len(plan)} rename(s) planned', Styles.BOLD)}\n")
+    log(
+        f"  {style(header_before, Styles.BOLD):<{col}}    {style(header_after, Styles.BOLD)}"
+    )
+    log("  " + "─" * (col + 4 + min(max(len(n.name) for _, n in plan), 80)))
 
     for old, new in plan:
         o_pad = old.name[:col].ljust(col)
         n_text = new.name[:80]
         conflict = new.exists() and not os.path.samefile(new, old)
-        suffix = dim("  ← target exists, will skip") if conflict else ""
-        n_color = yellow(n_text) if conflict else green(n_text)
-        print(f"  {cyan(o_pad)}  →  {n_color}{suffix}")
+        suffix = style("  ← target exists, will skip", Styles.DIM) if conflict else ""
+        n_color = (
+            style(n_text, Colors.YELLOW) if conflict else style(n_text, Colors.GREEN)
+        )
+        log(f"  {style(o_pad, Colors.CYAN)}  →  {n_color}{suffix}")
 
     # ── Counts
     n_conflicts = sum(1 for o, n in plan if n.exists() and not os.path.samefile(n, o))
     to_apply = len(plan) - n_conflicts
 
     if args.dry_run:
-        print("\n[bold yellow]Dry run[/] — no changes made.")
+        log(style("\nDry run — no changes made.", Colors.YELLOW, Styles.BOLD))
         return
 
     if to_apply == 0:
-        print(
-            "\nAll planned renames would conflict with existing files — nothing to do."
-        )
+        log("\nAll planned renames would conflict with existing files — nothing to do.")
         return
 
     # ── Confirmation
@@ -476,10 +492,10 @@ def main() -> None:
         try:
             ans = input(f"\nApply {to_apply} rename(s)? [y/N] ").strip().lower()
         except KeyboardInterrupt, EOFError:
-            print("\nAborted.")
+            log("\nAborted.")
             return
         if ans != "y":
-            print("Aborted.")
+            log("Aborted.")
             return
 
     # ── Execute
@@ -487,27 +503,27 @@ def main() -> None:
     applied_records: list[tuple[Path, Path]] = []
     for old, new in plan:
         if new.exists() and not os.path.samefile(new, old):
-            print(yellow(f"  SKIP  {old.name!r}  (target already exists)"))
+            log(style(f"  SKIP  {old.name!r}  (target already exists)", Colors.YELLOW))
             continue
         try:
             old.rename(new)
-            print(green(f"  OK    {old.name!r}  →  {new.name!r}"))
+            log(style(f"  OK    {old.name!r}  →  {new.name!r}", Colors.GREEN))
             applied += 1
             applied_records.append((old, new))
         except OSError as e:
-            print(f"  ERR   {old.name!r}: {e}")
+            log(f"  ERR   {old.name!r}: {e}")
             errors += 1
 
     if applied_records:
         try:
             write_undo_manifest(path, applied_records)
         except OSError as e:
-            print(yellow(f"\nwarning: could not write undo manifest: {e}"))
+            log(style(f"\nwarning: could not write undo manifest: {e}", Colors.YELLOW))
 
     parts = [f"{applied} rename(s) applied"]
     if errors:
         parts.append(f"{errors} error(s)")
-    print("\n" + ", ".join(parts) + ".")
+    log("\n" + ", ".join(parts) + ".")
 
 
 if __name__ == "__main__":

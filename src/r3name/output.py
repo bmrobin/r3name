@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Any
 
 from rich.console import Console
 from rich.markup import escape
@@ -17,25 +18,23 @@ class Styles(StrEnum):
     DIM = "dim"
 
 
-def _style(style: str, text: str) -> str:
-    return f"[{style}]{escape(text)}[/]"
+def style(text: str, *styles: Colors | Styles | str) -> str:
+    """
+    Return Rich markup for text using one or more styles.
+
+    Example:
+        style("hello", Colors.GREEN)
+        style("warning", Styles.BOLD, Colors.YELLOW)
+    """
+    escaped = escape(text)
+    if not styles:
+        return escaped
+    style_expr = " ".join(str(s) for s in styles)
+    return f"[{style_expr}]{escaped}[/]"
 
 
-def green(msg: str) -> str:
-    return _style(Colors.GREEN, msg)
-
-
-def yellow(msg: str) -> str:
-    return _style(Colors.YELLOW, msg)
-
-
-def cyan(msg: str) -> str:
-    return _style(Colors.CYAN, msg)
-
-
-def bold(msg: str) -> str:
-    return _style(Styles.BOLD, msg)
-
-
-def dim(msg: str) -> str:
-    return _style(Styles.DIM, msg)
+def log(*objects: Any, **kwargs: Any) -> None:
+    """
+    Print to the Rich Console() instance.
+    """
+    console.print(*objects, **kwargs)
