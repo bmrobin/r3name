@@ -40,31 +40,26 @@ r3name . --ext txt --sub " " "_" -y
 r3name . --undo -y
 ```
 
-## Quick Start
-
 ## Requirements
 
 - Python 3.14+
+- `uv` - https://docs.astral.sh/uv/
 
-## Install (editable, recommended for local development)
-
+## Install
+Install the requirements for local usage, testing, linting, etc.
 ```bash
 uv sync
-uv pip install -e .
 ```
 
-or
-
+To build the package for distribution [not required for local usage]
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+uv build
 ```
 
 ## Run
-
+Verify setup was successful
 ```bash
-r3name . --sub old new
+r3name --help
 ```
 
 If you are running from the repo root without installing the console script yet, use module execution:
@@ -139,6 +134,12 @@ Behavior:
   - Skip confirmation prompt
 - --undo
   - Undo the last successful rename run recorded in .r3name-undo.json
+  - Cannot be combined with transforms, filters, or numbering options
+
+Output formatting:
+
+- r3name uses Rich for styled terminal output.
+- If output is piped to another command/file, style rendering depends on whether stdout is treated as a terminal.
 
 ## Safety and Conflict Behavior
 
@@ -224,33 +225,16 @@ Rename directories only:
 r3name . --dirs-only --sub " " "_" -r -y
 ```
 
-## Testing
-
-Run tests (xdist enabled via pyproject addopts):
+## Miscellaneous
 
 ```bash
-pytest
+# Run tests
+uv run pytest
+
+# Format code
+ruff format
+
+# Lint code (add --fix to autofix issues)
+ruff check
 ```
 
-Single-process run:
-
-```bash
-pytest -n 0
-```
-
-## Troubleshooting
-
-No matching entries found:
-
-- Check your path and filters (--ext, --files-only, --dirs-only)
-- Add --hidden if you want dotfiles included
-
-No changes:
-
-- Names may already match desired output
-- Transform may not affect current names
-
-Undo says no manifest:
-
-- No successful rename run has been recorded in that directory root
-- Run a non-dry rename first, then try --undo
