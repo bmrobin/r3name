@@ -1,0 +1,4 @@
+check:
+	ruff format
+	ruff check --fix
+	uv run pytest
