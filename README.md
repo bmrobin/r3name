@@ -22,22 +22,22 @@ It supports:
 r3name . --sub "old" "new" -n
 
 # Apply literal replacement
-r3name . --sub "old" "new" -y
+r3name . --sub "old" "new"
 
 # Regex: spaces -> underscores
-r3name . --regex "\\s+" "_" -y
+r3name . --regex "\\s+" "_"
 
 # Lowercase names recursively
-r3name . --case lower -r -y
+r3name . --case lower -r
 
 # Number files (01 - name, 02 - name, ...)
-r3name . --number -y
+r3name . --number
 
 # Only .txt files
-r3name . --ext txt --sub " " "_" -y
+r3name . --ext txt --sub " " "_"
 
 # Undo last successful run in this directory
-r3name . --undo -y
+r3name . --undo
 ```
 
 ## Requirements
@@ -131,7 +131,7 @@ Behavior:
 - -n, --dry-run
   - Preview planned changes without applying
 - -y, --yes
-  - Skip confirmation prompt
+  - Skip confirmation prompt [default behavior is confirm before renaming]
 - --undo
   - Undo the last successful rename run recorded in .r3name-undo.json
   - Cannot be combined with transforms, filters, or numbering options
@@ -164,13 +164,13 @@ Example flow:
 
 ```bash
 # Apply rename
-r3name . --sub old new -y
+r3name . --sub old new
 
 # Preview undo
 r3name . --undo -n
 
 # Apply undo
-r3name . --undo -y
+r3name . --undo
 ```
 
 Undo behavior details:
@@ -186,43 +186,43 @@ Undo behavior details:
 Replace spaces with underscores:
 
 ```bash
-r3name . --regex "\\s+" "_" -y
+r3name . --regex "\\s+" "_"
 ```
 
 Remove a fixed token:
 
 ```bash
-r3name . --sub "[DRAFT] " "" -y
+r3name . --sub "[DRAFT] " ""
 ```
 
 Normalize to lowercase (keep extensions):
 
 ```bash
-r3name . --case lower -y
+r3name . --case lower
 ```
 
 Strip noisy separators from edges:
 
 ```bash
-r3name . --strip " _-" -y
+r3name . --strip " _-"
 ```
 
 Number files with custom format:
 
 ```bash
-r3name . --number --num-start 10 --num-pad 3 --num-prefix "IMG_" --num-sep "-" -y
+r3name . --number --num-start 10 --num-pad 3 --num-prefix "IMG_" --num-sep "-"
 ```
 
 Only rename txt files recursively:
 
 ```bash
-r3name . --ext txt --sub " " "_" -r -y
+r3name . --ext txt --sub " " "_" -r
 ```
 
 Rename directories only:
 
 ```bash
-r3name . --dirs-only --sub " " "_" -r -y
+r3name . --dirs-only --sub " " "_" -r
 ```
 
 ## Miscellaneous
