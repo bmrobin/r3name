@@ -226,6 +226,7 @@ r3name . --dirs-only --sub " " "_" -r
 ```
 
 ## Miscellaneous
+Run all project checks with `make check`.  Individual aspects of this are described below
 
 ```bash
 # Run tests
@@ -234,7 +235,10 @@ uv run pytest
 # Format code
 ruff format
 
-# Lint code (add --fix to autofix issues)
-ruff check
+# Lint code
+ruff check --fix
+
+# Type check Python
+ty check
 ```
 
