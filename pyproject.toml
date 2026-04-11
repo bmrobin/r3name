@@ -1,10 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "r3name"
 version = "0.1.0"
 description = "Rename files on the command line"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "rich>=14.3.3",
+]
+
+[project.scripts]
+r3name = "r3name:main"
 
 [dependency-groups]
 dev = [
@@ -15,3 +24,13 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = "-n auto"
+pythonpath = ["src"]
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

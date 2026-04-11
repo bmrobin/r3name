@@ -19,25 +19,25 @@ It supports:
 
 ```bash
 # Preview only (no changes)
-python r3name.py . --sub "old" "new" -n
+r3name . --sub "old" "new" -n
 
 # Apply literal replacement
-python r3name.py . --sub "old" "new" -y
+r3name . --sub "old" "new" -y
 
 # Regex: spaces -> underscores
-python r3name.py . --regex "\\s+" "_" -y
+r3name . --regex "\\s+" "_" -y
 
 # Lowercase names recursively
-python r3name.py . --case lower -r -y
+r3name . --case lower -r -y
 
 # Number files (01 - name, 02 - name, ...)
-python r3name.py . --number -y
+r3name . --number -y
 
 # Only .txt files
-python r3name.py . --ext txt --sub " " "_" -y
+r3name . --ext txt --sub " " "_" -y
 
 # Undo last successful run in this directory
-python r3name.py . --undo -y
+r3name . --undo -y
 ```
 
 ## Quick Start
@@ -50,6 +50,7 @@ python r3name.py . --undo -y
 
 ```bash
 uv sync
+uv pip install -e .
 ```
 
 or
@@ -63,19 +64,19 @@ pip install -e .
 ## Run
 
 ```bash
-python r3name.py . --sub old new
+r3name . --sub old new
 ```
 
-You can also run with your venv interpreter directly:
+If you are running from the repo root without installing the console script yet, use module execution:
 
 ```bash
-.venv/bin/python r3name.py . --sub old new
+.venv/bin/python -m r3name . --sub old new
 ```
 
 ## Basic Usage
 
 ```bash
-python r3name.py PATH [OPTIONS]
+r3name PATH [OPTIONS]
 ```
 
 - PATH is optional and defaults to current directory (.)
@@ -83,12 +84,12 @@ python r3name.py PATH [OPTIONS]
 Examples:
 
 ```bash
-python r3name.py . --regex "\\s+" "_"
-python r3name.py . --sub "old" "new"
-python r3name.py . --case lower
-python r3name.py . --strip " _-"
-python r3name.py . --number --num-sep "_"
-python r3name.py ~/Music --ext flac --case title -r
+r3name . --regex "\\s+" "_"
+r3name . --sub "old" "new"
+r3name . --case lower
+r3name . --strip " _-"
+r3name . --number --num-sep "_"
+r3name ~/Music --ext flac --case title -r
 ```
 
 ## Option Reference
@@ -162,13 +163,13 @@ Example flow:
 
 ```bash
 # Apply rename
-python r3name.py . --sub old new -y
+r3name . --sub old new -y
 
 # Preview undo
-python r3name.py . --undo -n
+r3name . --undo -n
 
 # Apply undo
-python r3name.py . --undo -y
+r3name . --undo -y
 ```
 
 Undo behavior details:
@@ -184,43 +185,43 @@ Undo behavior details:
 Replace spaces with underscores:
 
 ```bash
-python r3name.py . --regex "\\s+" "_" -y
+r3name . --regex "\\s+" "_" -y
 ```
 
 Remove a fixed token:
 
 ```bash
-python r3name.py . --sub "[DRAFT] " "" -y
+r3name . --sub "[DRAFT] " "" -y
 ```
 
 Normalize to lowercase (keep extensions):
 
 ```bash
-python r3name.py . --case lower -y
+r3name . --case lower -y
 ```
 
 Strip noisy separators from edges:
 
 ```bash
-python r3name.py . --strip " _-" -y
+r3name . --strip " _-" -y
 ```
 
 Number files with custom format:
 
 ```bash
-python r3name.py . --number --num-start 10 --num-pad 3 --num-prefix "IMG_" --num-sep "-" -y
+r3name . --number --num-start 10 --num-pad 3 --num-prefix "IMG_" --num-sep "-" -y
 ```
 
 Only rename txt files recursively:
 
 ```bash
-python r3name.py . --ext txt --sub " " "_" -r -y
+r3name . --ext txt --sub " " "_" -r -y
 ```
 
 Rename directories only:
 
 ```bash
-python r3name.py . --dirs-only --sub " " "_" -r -y
+r3name . --dirs-only --sub " " "_" -r -y
 ```
 
 ## Testing

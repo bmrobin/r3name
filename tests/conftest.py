@@ -6,19 +6,19 @@ import pytest
 
 
 @pytest.fixture
-def script_path() -> Path:
-    return Path(__file__).parent.parent / "r3name.py"
+def repo_root() -> Path:
+    return Path(__file__).parent.parent
 
 
 @pytest.fixture
-def cli(script_path: Path, tmp_path: Path):
-    """Run r3name.py in tmp_path by default unless a custom target path is provided."""
+def cli(repo_root: Path, tmp_path: Path):
+    """Run r3name as a module against tmp_path by default."""
 
     def _run(*args: str, cwd: Path | None = None, path: Path | None = None):
         target_path = path if path is not None else tmp_path
-        target_cwd = cwd if cwd is not None else tmp_path
+        target_cwd = cwd if cwd is not None else repo_root
         return subprocess.run(
-            [sys.executable, str(script_path), str(target_path), *args],
+            [sys.executable, "-m", "r3name", str(target_path), *args],
             cwd=target_cwd,
             capture_output=True,
             text=True,

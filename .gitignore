@@ -8,3 +8,5 @@ ve/
 virtualenv/
 venv/
 *.pyc
+*.egg-info
+dist/

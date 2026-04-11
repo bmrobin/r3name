@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""rnm — rename files and directories from the command line."""
+"""
+r3name — rename files and directories from the command line.
+"""
 
 import argparse
 import json
@@ -10,41 +12,18 @@ import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
 
-# ─── ANSI helpers ─────────────────────────────────────────────────────────────
+from .output import bold, cyan, dim, green, yellow
 
-USE_COLOR = sys.stdout.isatty()
 UNDO_FILENAME = ".r3name-undo.json"
-
-
-def _c(code: str, text: str) -> str:
-    return f"{code}{text}\033[0m" if USE_COLOR else text
-
-
-def green(t: str) -> str:
-    return _c("\033[32m", t)
-
-
-def yellow(t: str) -> str:
-    return _c("\033[33m", t)
-
-
-def cyan(t: str) -> str:
-    return _c("\033[36m", t)
-
-
-def bold(t: str) -> str:
-    return _c("\033[1m", t)
-
-
-def dim(t: str) -> str:
-    return _c("\033[2m", t)
 
 
 # ─── Transforms ───────────────────────────────────────────────────────────────
 
 
 def apply_transforms(name: str, args: argparse.Namespace) -> str:
-    """Apply all requested per-file transforms to a filename."""
+    """
+    Apply all requested per-file transforms to a filename.
+    """
     result = name
 
     if args.regex:
@@ -77,32 +56,40 @@ def apply_transforms(name: str, args: argparse.Namespace) -> str:
 
 
 def apply_numbering(names: list[str], args: argparse.Namespace) -> list[str]:
-    """Prepend sequential numbers to a list of filenames."""
+    """
+    Prepend sequential numbers to a list of filenames.
+    """
     return [
         f"{args.num_prefix}{str(args.num_start + i).zfill(args.num_pad)}{args.num_sep}{name}"
         for i, name in enumerate(names)
     ]
 
 
-def undo_manifest_path(path: Path) -> Path:
-    """Return the undo manifest path for an operation root."""
+def get_undo_manifest_path(path: Path) -> Path:
+    """
+    Return the undo manifest path for an operation root.
+    """
     return path / UNDO_FILENAME
 
 
 def write_undo_manifest(path: Path, records: list[tuple[Path, Path]]) -> None:
-    """Persist successful renames so they can be reversed later."""
+    """
+    Persist successful renames so they can be reversed later.
+    """
     manifest = {
         "version": 1,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "root": str(path),
         "renames": [{"old": str(old), "new": str(new)} for old, new in records],
     }
-    undo_manifest_path(path).write_text(json.dumps(manifest, indent=2) + "\n")
+    get_undo_manifest_path(path).write_text(json.dumps(manifest, indent=2) + "\n")
 
 
 def load_undo_manifest(path: Path) -> dict:
-    """Load and minimally validate the undo manifest."""
-    mpath = undo_manifest_path(path)
+    """
+    Load and minimally validate the undo manifest.
+    """
+    mpath = get_undo_manifest_path(path)
     try:
         data = json.loads(mpath.read_text())
     except OSError as e:
@@ -116,7 +103,9 @@ def load_undo_manifest(path: Path) -> dict:
 
 
 def display_name(path: Path, root: Path) -> str:
-    """Render a path relative to root when possible for clearer output."""
+    """
+    Render a path relative to root when possible for clearer output.
+    """
     try:
         return str(path.relative_to(root))
     except ValueError:
@@ -124,8 +113,10 @@ def display_name(path: Path, root: Path) -> str:
 
 
 def run_undo(root: Path, args: argparse.Namespace) -> None:
-    """Undo the last successful rename run for this root directory."""
-    mpath = undo_manifest_path(root)
+    """
+    Undo the last successful rename run for this root directory.
+    """
+    mpath = get_undo_manifest_path(root)
     if not mpath.exists():
         print(f"No undo manifest found at {mpath}.")
         return
@@ -271,19 +262,19 @@ def collect_targets(path: Path, args: argparse.Namespace) -> list[Path]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="rnm",
+        prog="r3name",
         description="Rename files and directories from the command line.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
             examples:
-              rnm . --regex "\\s+" "_"                  replace spaces with underscores
-              rnm . --sub "old" "new"                  literal substring replacement
-              rnm . --case lower                       lowercase all filenames
-              rnm . --strip " _-"                      strip leading/trailing separators
-              rnm . --number --num-sep "_"             prepend 01_, 02_, …
-              rnm . --regex "(.*)" "\\1" --dry-run      preview without applying
-              rnm ~/Music --ext flac --case title -r   title-case all .flac files recursively
-              rnm . --undo                             undo the last successful rename run in .
+              r3name . --regex "\\s+" "_"                  replace spaces with underscores
+              r3name . --sub "old" "new"                  literal substring replacement
+              r3name . --case lower                       lowercase all filenames
+              r3name . --strip " _-"                      strip leading/trailing separators
+              r3name . --number --num-sep "_"             prepend 01_, 02_, …
+              r3name . --regex "(.*)" "\\1" --dry-run      preview without applying
+              r3name ~/Music --ext flac --case title -r   title-case all .flac files recursively
+              r3name . --undo                             undo the last successful rename run in .
         """),
     )
 
@@ -458,7 +449,7 @@ def main() -> None:
     print("  " + "─" * (col + 4 + min(max(len(n.name) for _, n in plan), 80)))
 
     for old, new in plan:
-        o_pad = old.name[:col].ljust(col)  # pad raw text, THEN colorize
+        o_pad = old.name[:col].ljust(col)
         n_text = new.name[:80]
         conflict = new.exists() and not os.path.samefile(new, old)
         suffix = dim("  ← target exists, will skip") if conflict else ""
