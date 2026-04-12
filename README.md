@@ -239,6 +239,6 @@ ruff format
 ruff check --fix
 
 # Type check Python
-ty check
+uv run pyright
 ```
 

@@ -3,15 +3,19 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Protocol
 
 from .output import Colors, Styles, log, style
 
-if TYPE_CHECKING:
-    import argparse
-
-
 UNDO_FILENAME = ".r3name-undo.json"
+
+
+class UndoOptions(Protocol):
+    @property
+    def dry_run(self) -> bool: ...
+
+    @property
+    def yes(self) -> bool: ...
 
 
 def get_undo_manifest_path(path: Path) -> Path:
@@ -61,7 +65,7 @@ def get_path_display_name(path: Path, root: Path) -> str:
         return str(path)
 
 
-def run_undo(root: Path, args: "argparse.Namespace") -> None:
+def run_undo(root: Path, args: UndoOptions) -> None:
     """
     Undo the last successful rename run for this root directory.
     """

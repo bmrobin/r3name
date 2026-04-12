@@ -10,13 +10,14 @@ import sys
 import textwrap
 from pathlib import Path
 
+from .config import NumberingOptions, ParsedOptions, TransformOptions
 from .output import Colors, Styles, log, style
 from .undo import UNDO_FILENAME, run_undo, write_undo_manifest
 
 # ─── Transforms ───────────────────────────────────────────────────────────────
 
 
-def apply_transforms(name: str, args: argparse.Namespace) -> str:
+def apply_transforms(name: str, args: ParsedOptions) -> str:
     """
     Apply all requested per-file transforms to a filename.
     """
@@ -51,7 +52,7 @@ def apply_transforms(name: str, args: argparse.Namespace) -> str:
     return result
 
 
-def apply_numbering(names: list[str], args: argparse.Namespace) -> list[str]:
+def apply_numbering(names: list[str], args: ParsedOptions) -> list[str]:
     """
     Prepend sequential numbers to a list of filenames.
     """
@@ -64,7 +65,7 @@ def apply_numbering(names: list[str], args: argparse.Namespace) -> list[str]:
 # ─── Target collection ────────────────────────────────────────────────────────
 
 
-def collect_targets(path: Path, args: argparse.Namespace) -> list[Path]:
+def collect_targets(path: Path, args: ParsedOptions) -> list[Path]:
     entries = sorted(path.rglob("*") if args.recursive else path.iterdir())
     out: list[Path] = []
     for entry in entries:
@@ -130,7 +131,7 @@ def main() -> None:
     )
     g.add_argument(
         "--case",
-        choices=["upper", "lower", "title"],
+        choices=TransformOptions.case_choices(),
         help="convert filename case (extension is preserved)",
     )
 
@@ -142,16 +143,16 @@ def main() -> None:
     n.add_argument(
         "--num-start",
         type=int,
-        default=1,
+        default=NumberingOptions.default_number_start(),
         metavar="N",
-        help="starting number (default: 1)",
+        help=f"starting number (default: {NumberingOptions.default_number_start()})",
     )
     n.add_argument(
         "--num-pad",
         type=int,
-        default=2,
+        default=NumberingOptions.default_number_pad(),
         metavar="N",
-        help="zero-pad width (default: 2, giving 01, 02, …)",
+        help=f"zero-pad width (default: {NumberingOptions.default_number_pad()}, giving 01, 02, …)",
     )
     n.add_argument(
         "--num-prefix",
@@ -203,7 +204,8 @@ def main() -> None:
         help=f"undo the last successful run recorded in {UNDO_FILENAME}",
     )
 
-    args = parser.parse_args()
+    parsed_args = parser.parse_args()
+    args = ParsedOptions.from_namespace(parsed_args)
 
     if args.files_only and args.dirs_only:
         parser.error("--files-only and --dirs-only are mutually exclusive")
@@ -257,7 +259,11 @@ def main() -> None:
         new_names = apply_numbering(new_names, args)
 
     # Build the diff plan — only entries whose name actually changes
-    plan = [(t, t.parent / nn) for t, nn in zip(targets, new_names) if nn != t.name]
+    plan = [
+        (t, t.parent / nn)
+        for t, nn in zip(targets, new_names, strict=True)
+        if nn != t.name
+    ]
 
     if not plan:
         log("No changes — all names already match the desired form.")

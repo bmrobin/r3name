@@ -1,4 +1,11 @@
-check:
+.PHONY: clean check
+
+clean:
+	rm -rf dist/
+	rm -rf **/*.egg-info
+
+
+check: clean
 	ruff format
 	ruff check --fix
 	uv run pyright
