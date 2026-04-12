@@ -10,7 +10,12 @@ import sys
 import textwrap
 from pathlib import Path
 
-from .config import NumberingOptions, ParsedOptions, TransformOptions
+from .config import (
+    NumberingOptions,
+    ParsedOptions,
+    TransformOptions,
+    is_transform_option_missing,
+)
 from .output import Colors, Styles, log, style
 from .undo import UNDO_FILENAME, run_undo, write_undo_manifest
 
@@ -162,17 +167,18 @@ def main() -> None:
     )
     n.add_argument(
         "--num-sep",
-        default=" - ",
+        default=NumberingOptions.default_number_separator(),
         metavar="STR",
-        help='separator between number and name (default: " - ")',
+        help=f"separator between number and name (default: {NumberingOptions.default_number_separator()})",
     )
 
     # ── Filters
     f = parser.add_argument_group("filters")
-    f.add_argument(
+    scope = f.add_mutually_exclusive_group()
+    scope.add_argument(
         "--files-only", action="store_true", help="rename files only, skip directories"
     )
-    f.add_argument(
+    scope.add_argument(
         "--dirs-only", action="store_true", help="rename directories only, skip files"
     )
     f.add_argument(
@@ -207,9 +213,6 @@ def main() -> None:
     parsed_args = parser.parse_args()
     args = ParsedOptions.from_namespace(parsed_args)
 
-    if args.files_only and args.dirs_only:
-        parser.error("--files-only and --dirs-only are mutually exclusive")
-
     path = Path(args.path).resolve()
     if not path.is_dir():
         parser.error(f"not a directory: {path}")
@@ -227,10 +230,10 @@ def main() -> None:
                 args.ext,
                 args.hidden,
                 args.recursive,
-                args.num_start != 1,
-                args.num_pad != 2,
+                args.num_start != NumberingOptions.default_number_start(),
+                args.num_pad != NumberingOptions.default_number_pad(),
                 args.num_prefix != "",
-                args.num_sep != " - ",
+                args.num_sep != NumberingOptions.default_number_separator(),
             ]
         ):
             parser.error(
@@ -240,7 +243,7 @@ def main() -> None:
         return
 
     # Validate: need at least one transform
-    if not any([args.regex, args.sub, args.case, args.strip, args.number]):
+    if is_transform_option_missing(args):
         parser.error(
             "specify at least one transform: --regex, --sub, --case, --strip, or --number"
         )

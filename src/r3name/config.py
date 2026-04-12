@@ -33,6 +33,10 @@ class NumberingOptions(StrEnum):
     def default_number_pad() -> int:
         return 2
 
+    @staticmethod
+    def default_number_separator() -> str:
+        return " - "
+
 
 class FilteringOptions(StrEnum):
     EXTENSION = "ext"
@@ -95,3 +99,10 @@ class ParsedOptions:
             yes=getattr(ns, cls._dest(ProgramOptions.RUN)),
             undo=getattr(ns, cls._dest(ProgramOptions.UNDO)),
         )
+
+
+def is_transform_option_missing(args: ParsedOptions) -> bool:
+    """
+    Validate the required program arguments are provided.
+    """
+    return not any([args.regex, args.sub, args.case, args.strip, args.number])

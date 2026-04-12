@@ -10,6 +10,7 @@ from r3name.config import (
     ParsedOptions,
     ProgramOptions,
     TransformOptions,
+    is_transform_option_missing,
 )
 
 
@@ -225,3 +226,42 @@ def test_from_namespace_complex_configuration_combo():
     assert parsed.dry_run is True
     assert parsed.yes is True
     assert parsed.undo is False
+
+
+def test_argparse_enforces_mutually_exclusive_args(cli):
+    result = cli("--sub", "a", "b", "--files-only", "--dirs-only")
+    assert result.returncode != 0
+    assert "--files-only" in result.stderr
+    assert "--dirs-only" in result.stderr
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {},
+        {"regex": None},
+        {"sub": None},
+        {"case": None},
+        {"strip": None},
+        {"number": False},
+    ],
+)
+def test_required_args_not_ok(overrides):
+    parsed = ParsedOptions.from_namespace(make_namespace(**overrides))
+    assert is_transform_option_missing(parsed) is True
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"regex": (r"\\s+", "_")},
+        {"sub": ("old", "new")},
+        {"case": "lower"},
+        {"strip": "_-"},
+        {"number": True},
+        {"regex": (r"\\s+", "_"), "number": True},
+    ],
+)
+def test_required_args_ok(overrides):
+    parsed = ParsedOptions.from_namespace(make_namespace(**overrides))
+    assert is_transform_option_missing(parsed) is False
