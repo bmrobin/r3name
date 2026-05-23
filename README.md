@@ -233,10 +233,10 @@ Run all project checks with `make check`.  Individual aspects of this are descri
 uv run pytest
 
 # Format code
-ruff format
+uv run ruff format
 
 # Lint code
-ruff check --fix
+uv run ruff check --fix
 
 # Type check Python
 uv run pyright
