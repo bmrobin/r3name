@@ -1,0 +1,21 @@
+name: r3name ci
+
+on:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    container: python:latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Setup
+        run: uv sync
+
+      - name: Test
+        run: make check
